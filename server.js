@@ -23,22 +23,44 @@ const io = require("socket.io")(httpServer, {
 
 io.use(authSocket);
 io.on("connection", (socket) => socketServer(socket));
+const port = process.env.PORT || 3000;
 
-async function connectToDatabase() {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+
+const db = mongoose.connection;
+
+// Tangani event error dari koneksi MongoDB
+db.on('error', (err) => {
+  console.error('Kesalahan koneksi MongoDB:', err);
+  process.exit(1); // Keluar dari aplikasi jika terjadi kesalahan koneksi
+});
+
+// Tangani event berhasil terkoneksi ke MongoDB
+db.once('open', () => {
+  console.log('Terhubung ke MongoDB Atlas');
+  startServer(); // Panggil fungsi untuk memulai server setelah terkoneksi ke MongoDB
+});
+
+// Fungsi untuk memulai server
+function startServer() {
+  app.get('/', (req, res) => {
+    res.send('Hello, World!');
+  });
+
+  // Jalankan server
+  const server = app.listen(port, () => {
+    console.log(`Server berjalan di http://localhost:${port}`);
+  });
+
+  // Tangani event ketika server ditutup
+  process.on('SIGINT', () => {
+    console.log('Menutup server...');
+    server.close(() => {
+      console.log('Server ditutup dengan benar');
+      process.exit(0); // Keluar dari aplikasi setelah menutup server
     });
-    console.log('Terhubung ke MongoDB Atlas');
-  } catch (error) {
-    console.error('Kesalahan koneksi MongoDB:', error);
-  }
+  });
 }
-
-// Panggil fungsi untuk terhubung ke MongoDB Atlas
-connectToDatabase();
-
 // mongoose.connect(
 //   process.env.MONGO_URI,
 //   { useNewUrlParser: true, useUnifiedTopology: true },
