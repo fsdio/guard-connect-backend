@@ -24,17 +24,30 @@ const io = require("socket.io")(httpServer, {
 io.use(authSocket);
 io.on("connection", (socket) => socketServer(socket));
 
-mongoose.connect(
-  process.env.MONGO_URI,
-  { useNewUrlParser: true, useUnifiedTopology: true },
-  () => {
-    console.log("MongoDB connected");
-  }
-);
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+const db = mongoose.connection;
 
-httpServer.listen(process.env.PORT || 4000, () => {
-  console.log("Listening");
+// Tangani event error dari koneksi MongoDB
+db.on('error', (err) => {
+  console.error('Kesalahan koneksi MongoDB:', err);
 });
+
+// Tangani event berhasil terkoneksi ke MongoDB
+db.once('open', () => {
+  console.log('Terhubung ke MongoDB Atlas');
+});
+
+// mongoose.connect(
+//   process.env.MONGO_URI,
+//   { useNewUrlParser: true, useUnifiedTopology: true },
+//   () => {
+//     console.log("MongoDB connected");
+//   }
+// );
+
+// httpServer.listen(process.env.PORT || 4000, () => {
+//   console.log("Listening");
+// });
 
 app.use(express.json());
 app.use(cors());
