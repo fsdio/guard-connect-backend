@@ -24,18 +24,20 @@ const io = require("socket.io")(httpServer, {
 io.use(authSocket);
 io.on("connection", (socket) => socketServer(socket));
 
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
-const db = mongoose.connection;
+async function connectToDatabase() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Terhubung ke MongoDB Atlas');
+  } catch (error) {
+    console.error('Kesalahan koneksi MongoDB:', error);
+  }
+}
 
-// Tangani event error dari koneksi MongoDB
-db.on('error', (err) => {
-  console.error('Kesalahan koneksi MongoDB:', err);
-});
-
-// Tangani event berhasil terkoneksi ke MongoDB
-db.once('open', () => {
-  console.log('Terhubung ke MongoDB Atlas');
-});
+// Panggil fungsi untuk terhubung ke MongoDB Atlas
+connectToDatabase();
 
 // mongoose.connect(
 //   process.env.MONGO_URI,
